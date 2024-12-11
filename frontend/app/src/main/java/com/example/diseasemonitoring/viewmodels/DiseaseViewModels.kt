@@ -1,15 +1,19 @@
 package com.example.diseasemonitoring.viewmodels
 
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.*
+
 import com.example.diseasemonitoring.api.RetrofitInstance
 import com.example.diseasemonitoring.models.Disease
+import com.example.diseasemonitoring.models.LoginRequest
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
+// ViewModel for Diseases
 class DiseaseViewModels : ViewModel() {
 
     private val _disease = MutableLiveData<Disease>()
@@ -23,23 +27,23 @@ class DiseaseViewModels : ViewModel() {
     val isLoading: LiveData<Boolean> get() = _isLoading
 
     private val staticUserId = "64fef678e1b2ec4f112d4f89"
+
     init {
         fetchAllDiseases(staticUserId)
     }
 
     fun addDisease(disease: Disease) {
-        _isLoading.value = true // Set loading state before API call
+        _isLoading.value = true
         val diseaseWithUserId = disease.copy(userId = staticUserId)
         RetrofitInstance.api.addDisease(diseaseWithUserId).enqueue(object : Callback<Disease> {
             override fun onResponse(call: Call<Disease>, response: Response<Disease>) {
-                _isLoading.value = false // Reset loading state
+                _isLoading.value = false
                 if (response.isSuccessful) {
                     response.body()?.let {
                         _disease.value = it
-                        // Update the diseaseList by adding the new disease
                         val currentList = _diseaseList.value?.toMutableList() ?: mutableListOf()
-                        currentList.add(it) // Add the new disease
-                        _diseaseList.value = currentList // Update the live data
+                        currentList.add(it)
+                        _diseaseList.value = currentList
                         Log.d("DiseaseViewModels", "Disease added successfully: $it")
                     }
                 } else {
@@ -48,7 +52,7 @@ class DiseaseViewModels : ViewModel() {
             }
 
             override fun onFailure(call: Call<Disease>, t: Throwable) {
-                _isLoading.value = false // Reset loading state
+                _isLoading.value = false
                 _errorMessage.value = "Error adding disease: ${t.message}"
                 Log.e("DiseaseViewModels", "Error adding disease: ${t.message}")
             }
@@ -62,11 +66,11 @@ class DiseaseViewModels : ViewModel() {
         Log.e("DiseaseViewModels", "API error (Code: $statusCode): $errorBody")
     }
 
-    fun fetchDiseaseByName(userId:String ,name: String) {
+    fun fetchDiseaseByName(userId: String, name: String) {
         _isLoading.value = true
-        RetrofitInstance.api.getDiseaseUserIdAndByName(userId,name).enqueue(object : Callback<Disease> {
+        RetrofitInstance.api.getDiseaseUserIdAndByName(userId, name).enqueue(object : Callback<Disease> {
             override fun onResponse(call: Call<Disease>, response: Response<Disease>) {
-                _isLoading.value = false // Reset loading state
+                _isLoading.value = false
                 if (response.isSuccessful) {
                     _disease.value = response.body()
                     Log.d("DiseaseViewModels", "Fetched disease: ${response.body()}")
@@ -76,18 +80,18 @@ class DiseaseViewModels : ViewModel() {
             }
 
             override fun onFailure(call: Call<Disease>, t: Throwable) {
-                _isLoading.value = false // Reset loading state
+                _isLoading.value = false
                 _errorMessage.value = "Error fetching disease by name: ${t.message}"
                 Log.e("DiseaseViewModels", "Error fetching disease: ${t.message}")
             }
         })
     }
 
-    fun fetchAllDiseases(userId:String) {
+    fun fetchAllDiseases(userId: String) {
         _isLoading.value = true
-        RetrofitInstance.api.getAllDiseases(userId ).enqueue(object : Callback<List<Disease>> {
+        RetrofitInstance.api.getAllDiseases(userId).enqueue(object : Callback<List<Disease>> {
             override fun onResponse(call: Call<List<Disease>>, response: Response<List<Disease>>) {
-                _isLoading.value = false // Reset loading state
+                _isLoading.value = false
                 if (response.isSuccessful) {
                     _diseaseList.value = response.body() ?: emptyList()
                     Log.d("DiseaseViewModels", "Fetched all diseases: ${response.body()}")
@@ -97,18 +101,17 @@ class DiseaseViewModels : ViewModel() {
             }
 
             override fun onFailure(call: Call<List<Disease>>, t: Throwable) {
-                _isLoading.value = false // Reset loading state
+                _isLoading.value = false
                 _errorMessage.value = "Error fetching all diseases: ${t.message}"
                 Log.e("DiseaseViewModels", "Error fetching all diseases: ${t.message}")
             }
         })
     }
 
-
-    fun updateDisease(diseaseName: String,updatedDisease:Disease) {
+    fun updateDisease(diseaseName: String, updatedDisease: Disease) {
         _isLoading.value = true
         val diseaseWithUserId = updatedDisease.copy(userId = staticUserId)
-        RetrofitInstance.api.updateDisease(staticUserId , diseaseName, diseaseWithUserId).enqueue(object : Callback<Disease> {
+        RetrofitInstance.api.updateDisease(staticUserId, diseaseName, diseaseWithUserId).enqueue(object : Callback<Disease> {
             override fun onResponse(call: Call<Disease>, response: Response<Disease>) {
                 _isLoading.value = false
                 if (response.isSuccessful) {
@@ -131,13 +134,13 @@ class DiseaseViewModels : ViewModel() {
             }
         })
     }
+
     fun deleteDisease(diseaseName: String) {
         _isLoading.value = true
         RetrofitInstance.api.deleteDisease(staticUserId, diseaseName).enqueue(object : Callback<Void> {
             override fun onResponse(call: Call<Void>, response: Response<Void>) {
                 _isLoading.value = false
                 if (response.isSuccessful) {
-                    // Remove the deleted disease from the list
                     _diseaseList.value = _diseaseList.value?.filter { it.name != diseaseName }
                     Log.d("DiseaseViewModels", "Disease deleted successfully")
                 } else {
@@ -153,3 +156,43 @@ class DiseaseViewModels : ViewModel() {
         })
     }
 }
+
+// ViewModel for User Authentication
+class UserViewModel : ViewModel() {
+
+    private val _userState = MutableStateFlow(UserState())
+    val userState: StateFlow<UserState> = _userState
+
+    fun loginUser(email: String, password: String) {
+        _userState.value = _userState.value.copy(isLoading = true, errorMessage = null)
+        viewModelScope.launch {
+            try {
+                val response = RetrofitInstance.api.loginUser(LoginRequest(email, password))
+                if (response.success) {
+                    _userState.value = _userState.value.copy(isLoggedIn = true, isLoading = false)
+                } else {
+                    _userState.value = _userState.value.copy(
+                        isLoading = false,
+                        errorMessage = response.message
+                    )
+                }
+            } catch (e: Exception) {
+                _userState.value = _userState.value.copy(
+                    isLoading = false,
+                    errorMessage = "Erreur de connexion : ${e.localizedMessage}"
+                )
+            }
+        }
+    }
+
+    fun resetError() {
+        _userState.value = _userState.value.copy(errorMessage = null)
+    }
+}
+
+// User State Data Class
+data class UserState(
+    val isLoading: Boolean = false,
+    val isLoggedIn: Boolean = false,
+    val errorMessage: String? = null
+)

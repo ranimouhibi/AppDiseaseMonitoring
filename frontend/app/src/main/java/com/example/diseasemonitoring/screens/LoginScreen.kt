@@ -6,13 +6,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.diseasemonitoring.api.LoginRequest
+
 import com.example.diseasemonitoring.api.RetrofitInstance
+import com.example.diseasemonitoring.models.LoginRequest
 import kotlinx.coroutines.launch
-import androidx.compose.material3.TextButton
 
 @Composable
-fun LoginScreen(onLoginSuccess: () -> Unit, onNavigateToRegister: () -> Unit) {
+fun LoginScreen(
+    onLoginSuccess: () -> Unit,
+    onNavigateToRegister: () -> Unit
+) {
     val coroutineScope = rememberCoroutineScope()
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -92,16 +95,14 @@ fun LoginScreen(onLoginSuccess: () -> Unit, onNavigateToRegister: () -> Unit) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Texte en anglais pour l'inscription
         Text(
-            text = "Don't have an account? Sign up now.",
+            text = "Pas de compte ? Inscrivez-vous.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.primary
         )
 
-        // Bouton pour naviguer vers l'écran d'inscription
         TextButton(onClick = { onNavigateToRegister() }) {
-            Text("Register")
+            Text("S'inscrire")
         }
     }
 }

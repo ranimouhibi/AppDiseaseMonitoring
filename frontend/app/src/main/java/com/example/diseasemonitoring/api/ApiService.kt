@@ -1,6 +1,9 @@
 package com.example.diseasemonitoring.api
 
+import com.example.diseasemonitoring.models.ApiResponse
 import com.example.diseasemonitoring.models.Disease
+import com.example.diseasemonitoring.models.LoginRequest
+import com.example.diseasemonitoring.models.RegisterRequest
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -8,17 +11,6 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
-
-data class RegisterRequest(
-    val name: String,
-    val lastName: String,
-    val email: String,
-    val password: String,
-    val age: Int
-)
-
-data class LoginRequest(val email: String, val password: String)
-data class ApiResponse(val success: Boolean, val message: String)
 
 interface ApiService {
     @POST("/register")
